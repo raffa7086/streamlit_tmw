@@ -1,6 +1,18 @@
 import streamlit as st
 import pandas as pd
 
+def calcular_metricas(df):
+    df_data = df.groupby(by='Data')[["Valor"]].sum()
+    df_data["Desloc"] = df_data["Valor"].shift(1)
+    df_data["Diferença"] = df_data["Valor"] - df_data["Desloc"]
+    df_data["Avg 6M"] = df_data["Diferença"].rolling(6).mean().round(2)
+    df_data["Avg 12M"] = df_data["Diferença"].rolling(12).mean().round(2)
+    df_data["Avg 24M"] = df_data["Diferença"].rolling(24).mean().round(2)
+
+    df_data["Diferença Rel."] = (df_data["Diferença"] / df_data["Desloc"]).round(4) * 100
+
+    return df_data
+
 st.set_page_config(page_title="Finanças", page_icon="💰")
 
 st.markdown("""
@@ -52,3 +64,6 @@ if file_upload is not None:
 
         # else:
         st.bar_chart(df_instituicao.loc[date])
+
+    df_stats = calcular_metricas(df)
+    st.dataframe(df_stats)
