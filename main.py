@@ -114,3 +114,17 @@ if file_upload is not None:
             "Avg 24M Total Rel."
         ]
         st.line_chart(data=df_stats[rel_cols])
+
+    with st.expander("Metas Financeiras"):
+
+
+        col1, col2 = st.columns(2)
+
+        # Filtro de data
+        data_inicio_meta = col1.date_input("Data Início Meta", max_value=df_stats.index.max())
+
+        # Filtrar a data mais próxima disponível no DataFrame antes ou igual à data selecionada
+        dt_filtrada = df_stats.index[df_stats.index <= data_inicio_meta][-1]
+
+        valor_inicio = df_stats.loc[dt_filtrada]["Valor"]
+        col2.markdown(f"**Valor na data de início da meta: R$ {valor_inicio:.2f}**")
