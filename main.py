@@ -28,7 +28,17 @@ if file_upload is not None:
     # Tabela dinâmica por instituição
     exp2 = st.expander("Tabela Dinâmica por Instituição")
     df_instituicao = df.pivot_table(index='Data', columns='Instituição', values='Valor')
-    exp2.dataframe(df_instituicao)
 
-    # Gráfico responsivo com tooltip e legenda organizada
-    exp2.line_chart(df_instituicao)
+    # Abas para dados, histórico e distribuição
+    tab_data, tab_history, tb_share = exp2.tabs(["Dados", "Histórico", "Distribuição"])
+
+    # Conteúdo das abas
+    with tab_data:
+        st.dataframe(df_instituicao)
+
+    with tab_history:
+        st.line_chart(df_instituicao)
+    
+    with tb_share:
+        last_dt = df_instituicao.sort_index().iloc[-1]
+        st.bar_chart(last_dt)
