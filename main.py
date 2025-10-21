@@ -23,8 +23,12 @@ if file_upload is not None:
     # Exibir o conteúdo do arquivo
     exp1 = st.expander("Dados Brutos")    
     columns_fmt = {"Valor": st.column_config.NumberColumn("Valor", format="R$ %f")}
-    exp1.dataframe(df, hide_index=True, column_config=columns_fmt)
+    exp1.dataframe(df, hide_index=True, column_config=columns_fmt, use_container_width=True)
 
     # Tabela dinâmica por instituição
+    exp2 = st.expander("Tabela Dinâmica por Instituição")
     df_instituicao = df.pivot_table(index='Data', columns='Instituição', values='Valor')
-    st.dataframe(df_instituicao)
+    exp2.dataframe(df_instituicao, use_container_width=True)
+
+    # Gráfico responsivo com tooltip e legenda organizada
+    exp2.line_chart(df_instituicao, use_container_width=True)
