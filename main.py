@@ -1,25 +1,40 @@
 import streamlit as st
 import pandas as pd
 
+
+# --- Função para calcular métricas e indicadores financeiros com base na coluna 'Valor'
 def calcular_metricas(df: pd.DataFrame):
+    # Agrupo os dados por Data e somo os valores (caso existam múltiplas entradas no mesmo dia)
     df_data = df.groupby(by='Data')[["Valor"]].sum()
+
+    # Crio uma coluna deslocada para comparar o valor atual com o anterior
     df_data["Desloc"] = df_data["Valor"].shift(1)
     df_data["Diferença"] = df_data["Valor"] - df_data["Desloc"]
+
+    # Médias móveis (diferença média dos últimos 6, 12 e 24 meses)
     df_data["Avg 6M"] = df_data["Diferença"].rolling(6).mean().round(0)
     df_data["Avg 12M"] = df_data["Diferença"].rolling(12).mean().round(0)
     df_data["Avg 24M"] = df_data["Diferença"].rolling(24).mean().round(0)
+
+    # Variação percentual (quanto o valor atual representa em relação ao anterior)
     df_data["Diferença Rel."] = (df_data["Valor"] / df_data["Desloc"] -1)
+
+    # Crescimento acumulado (total) em diferentes janelas de tempo
     df_data["Avg 6M Total"] = df_data["Valor"].rolling(6).apply(lambda x: x[-1] - x[0])
     df_data["Avg 12M Total"] = df_data["Valor"].rolling(12).apply(lambda x: x[-1] - x[0])
     df_data["Avg 24M Total"] = df_data["Valor"].rolling(24).apply(lambda x: x[-1] - x[0])
+
+    # Crescimento percentual total (quanto cresceu em relação ao início da janela)
     df_data["Avg 6M Total Rel."] = df_data["Valor"].rolling(6).apply(lambda x: x[-1] / x[0] - 1)
     df_data["Avg 12M Total Rel."] = df_data["Valor"].rolling(12).apply(lambda x: x[-1] / x[0] - 1)
     df_data["Avg 24M Total Rel."] = df_data["Valor"].rolling(24).apply(lambda x: x[-1] / x[0] - 1)
 
+    # Removo a coluna auxiliar (não é mais necessária)
     df_data = df_data.drop(columns=["Desloc"])
 
     return df_data
 
+# --- Configuração da página Streamlit
 st.set_page_config(page_title="Finanças", page_icon="💰")
 
 st.markdown("""
@@ -76,6 +91,7 @@ if file_upload is not None:
     
     df_stats = calcular_metricas(df)
 
+    # Configuro o formato das colunas exibidas no dataframe de estatísticas
     columns_config = {
 
         "Diferença": st.column_config.NumberColumn("Diferença", format="R$ %f"),
@@ -125,6 +141,30 @@ if file_upload is not None:
 
         # Filtrar a data mais próxima disponível no DataFrame antes ou igual à data selecionada
         dt_filtrada = df_stats.index[df_stats.index <= data_inicio_meta][-1]
+        custos_fixos = col1.number_input("Custos Fixos", min_value=0., format="%.2f")
+
+
+        sal_bruto = col2.number_input("Salário Bruto", min_value=0., format="%.2f")
+        sal_liquido = col2.number_input("Salário Líquido", min_value=0., format="%.2f")
 
         valor_inicio = df_stats.loc[dt_filtrada]["Valor"]
-        col2.markdown(f"**Valor na data de início da meta: R$ {valor_inicio:.2f}**")
+        col1.markdown(f"**Patrimônio início meta: R$ {valor_inicio:.2f}**")
+
+        col1_pot, col2_pot = st.columns(2)
+        mensal = sal_liquido - custos_fixos
+        anual = mensal * 12
+
+        with col1_pot.container(border=True):
+            st.markdown(f"**Potencial Arrecadação Mês: R$ {mensal:.2f}**")
+        with col2_pot.container(border=True):
+            st.markdown(f"**Potencial Arrecadação Ano: R$ {anual:.2f}**")
+
+
+        with st.container(border=True):
+            col1_meta, col2_meta = st.columns(2)
+            with col1_meta:
+                meta_estipulada = st.number_input("Meta Financeira (Valor Alvo)", min_value=0., format="%.2f", value=mensal)
+
+            with col2_meta:
+                patrimonio_esperado = valor_inicio + meta_estipulada
+                st.markdown(f"Patrimônio Esperado pós meta:\n\n R$ {patrimonio_esperado:.2f}")
