@@ -72,6 +72,8 @@ if file_upload is not None:
         # else:
         st.bar_chart(df_instituicao.loc[date])
 
+    exp3 = st.expander("Estatísticas Gerais")
+    
     df_stats = calcular_metricas(df)
 
     columns_config = {
@@ -82,12 +84,33 @@ if file_upload is not None:
         "Avg 24M": st.column_config.NumberColumn("Avg 24M", format="R$ %f"),
         "Diferença Rel.": st.column_config.NumberColumn("Diferença Rel.", format="percent"),
         "Avg 6M Total": st.column_config.NumberColumn("Avg 6M Total", format="R$ %f"),
-        "Avg 12M Total": st.column_config.NumberColumn("Diferença", format="R$ %f"),
-        "Avg 24M Total": st.column_config.NumberColumn("Diferença", format="R$ %f"),
-        "Avg 6M Total Rel.": st.column_config.NumberColumn("Diferença", format="percent"),
-        "Avg 12M Total Rel.": st.column_config.NumberColumn("Diferença", format="percent"),
-        "Avg 24M Total Rel.": st.column_config.NumberColumn("Diferença", format="percent")
+        "Avg 12M Total": st.column_config.NumberColumn("Dif. Avg 12M Total", format="R$ %f"),
+        "Avg 24M Total": st.column_config.NumberColumn("Dif. Avg 24M Total", format="R$ %f"),
+        "Avg 6M Total Rel.": st.column_config.NumberColumn("Dif. Avg 6M Total Rel.", format="percent"),
+        "Avg 12M Total Rel.": st.column_config.NumberColumn("Dif. Avg 12M Total Rel.", format="percent"),
+        "Avg 24M Total Rel.": st.column_config.NumberColumn("Dif. Avg 24M Total Rel.", format="percent")
 
     }
 
-    st.dataframe(df_stats, column_config=columns_config)
+    tab_stats, tab_abs, tab_rel = exp3.tabs(tabs=["Dados", "Histórico Evolução", "Crescimento Relativo"])
+
+    with tab_stats:
+        st.dataframe(df_stats, column_config=columns_config)
+
+    with tab_abs:
+        abs_cols = [
+            "Diferença", 
+            "Avg 6M", 
+            "Avg 12M", 
+            "Avg 24M", 
+        ]
+        st.line_chart(df_stats[abs_cols])
+
+    with tab_rel:
+        rel_cols = [
+            "Diferença Rel.", 
+            "Avg 6M Total Rel.", 
+            "Avg 12M Total Rel.", 
+            "Avg 24M Total Rel."
+        ]
+        st.line_chart(data=df_stats[rel_cols])
