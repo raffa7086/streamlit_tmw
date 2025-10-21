@@ -41,12 +41,14 @@ if file_upload is not None:
     
     with tb_share:
 
-        date = st.date_input("Selecione a data para ver a distribuição:", 
-                            min_value=df['Data'].min(), 
-                            max_value=df['Data'].max())
-        
-        if date not in df_instituicao.index:
-            st.warning("Nenhum dado disponível para a data selecionada.")
+        date = st.selectbox("Filtro Data", options=df_instituicao.index)
 
-        else:
-            st.bar_chart(df_instituicao.loc[date])
+        # date = st.date_input("Selecione a data para ver a distribuição:", 
+        #                     min_value=df['Data'].min(), 
+        #                     max_value=df['Data'].max())
+        
+        # if date not in df_instituicao.index:
+        #     st.warning("Nenhum dado disponível para a data selecionada.")
+
+        # else:
+        st.bar_chart(df_instituicao.loc[date])
