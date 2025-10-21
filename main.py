@@ -40,5 +40,13 @@ if file_upload is not None:
         st.line_chart(df_instituicao)
     
     with tb_share:
-        last_dt = df_instituicao.sort_index().iloc[-1]
-        st.bar_chart(last_dt)
+
+        date = st.date_input("Selecione a data para ver a distribuição:", 
+                            min_value=df['Data'].min(), 
+                            max_value=df['Data'].max())
+        
+        if date not in df_instituicao.index:
+            st.warning("Nenhum dado disponível para a data selecionada.")
+
+        else:
+            st.bar_chart(df_instituicao.loc[date])
