@@ -1,15 +1,22 @@
 import streamlit as st
 import pandas as pd
 
-def calcular_metricas(df):
+def calcular_metricas(df: pd.DataFrame):
     df_data = df.groupby(by='Data')[["Valor"]].sum()
     df_data["Desloc"] = df_data["Valor"].shift(1)
     df_data["Diferença"] = df_data["Valor"] - df_data["Desloc"]
-    df_data["Avg 6M"] = df_data["Diferença"].rolling(6).mean().round(2)
-    df_data["Avg 12M"] = df_data["Diferença"].rolling(12).mean().round(2)
-    df_data["Avg 24M"] = df_data["Diferença"].rolling(24).mean().round(2)
+    df_data["Avg 6M"] = df_data["Diferença"].rolling(6).mean().round(0)
+    df_data["Avg 12M"] = df_data["Diferença"].rolling(12).mean().round(0)
+    df_data["Avg 24M"] = df_data["Diferença"].rolling(24).mean().round(0)
+    df_data["Diferença Rel."] = (df_data["Valor"] / df_data["Desloc"] -1)
+    df_data["Avg 6M Total"] = df_data["Valor"].rolling(6).apply(lambda x: x[-1] - x[0])
+    df_data["Avg 12M Total"] = df_data["Valor"].rolling(12).apply(lambda x: x[-1] - x[0])
+    df_data["Avg 24M Total"] = df_data["Valor"].rolling(24).apply(lambda x: x[-1] - x[0])
+    df_data["Avg 6M Total Rel."] = df_data["Valor"].rolling(6).apply(lambda x: x[-1] / x[0] - 1)
+    df_data["Avg 12M Total Rel."] = df_data["Valor"].rolling(12).apply(lambda x: x[-1] / x[0] - 1)
+    df_data["Avg 24M Total Rel."] = df_data["Valor"].rolling(24).apply(lambda x: x[-1] / x[0] - 1)
 
-    df_data["Diferença Rel."] = (df_data["Diferença"] / df_data["Desloc"]).round(4) * 100
+    df_data = df_data.drop(columns=["Desloc"])
 
     return df_data
 
@@ -66,4 +73,21 @@ if file_upload is not None:
         st.bar_chart(df_instituicao.loc[date])
 
     df_stats = calcular_metricas(df)
-    st.dataframe(df_stats)
+
+    columns_config = {
+
+        "Diferença": st.column_config.NumberColumn("Diferença", format="R$ %f"),
+        "Avg 6M": st.column_config.NumberColumn("Avg 6M", format="R$ %f"),
+        "Avg 12M": st.column_config.NumberColumn("Avg 12M", format="R$ %f"),
+        "Avg 24M": st.column_config.NumberColumn("Avg 24M", format="R$ %f"),
+        "Diferença Rel.": st.column_config.NumberColumn("Diferença Rel.", format="percent"),
+        "Avg 6M Total": st.column_config.NumberColumn("Avg 6M Total", format="R$ %f"),
+        "Avg 12M Total": st.column_config.NumberColumn("Diferença", format="R$ %f"),
+        "Avg 24M Total": st.column_config.NumberColumn("Diferença", format="R$ %f"),
+        "Avg 6M Total Rel.": st.column_config.NumberColumn("Diferença", format="percent"),
+        "Avg 12M Total Rel.": st.column_config.NumberColumn("Diferença", format="percent"),
+        "Avg 24M Total Rel.": st.column_config.NumberColumn("Diferença", format="percent")
+
+    }
+
+    st.dataframe(df_stats, column_config=columns_config)
