@@ -28,7 +28,7 @@ if file_upload is not None:
     # Tabela dinâmica por instituição
     exp2 = st.expander("Tabela Dinâmica por Instituição")
     df_instituicao = df.pivot_table(index='Data', columns='Instituição', values='Valor')
-    exp2.dataframe(df_instituicao, use_container_width=True)
+    exp2.dataframe(df_instituicao)
 
     # Gráfico responsivo com tooltip e legenda organizada
-    exp2.line_chart(df_instituicao, use_container_width=True)
+    exp2.line_chart(df_instituicao)
