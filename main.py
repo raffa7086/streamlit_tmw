@@ -1,6 +1,23 @@
 import streamlit as st
 import pandas as pd
+import requests
+import datetime
 
+@st.cache_data(ttl="1day")
+def get_selic():
+    url = "https://www.bcb.gov.br/api/servico/sitebcb/historicotaxasjuros"
+    resp = requests.get(url)
+    df = pd.DataFrame(resp.json()["conteudo"])
+
+    df["DataInicioVigencia"] = pd.to_datetime(df["DataInicioVigencia"]).dt.date
+    df["DataFimVigencia"] = pd.to_datetime(df["DataFimVigencia"]).dt.date
+    df["DataFimVigencia"] = df["DataFimVigencia"].fillna(datetime.date.today())
+
+    return df
+
+
+# Exemplo de uso:
+# df_selic = get_selic(11, data_inicial="01/01/2000", data_final="30/09/2025")
 
 # --- Função para calcular métricas e indicadores financeiros com base na coluna 'Valor'
 def calcular_metricas(df: pd.DataFrame):
@@ -149,6 +166,16 @@ if file_upload is not None:
 
         valor_inicio = df_stats.loc[dt_filtrada]["Valor"]
         col1.markdown(f"**Patrimônio início meta: R$ {valor_inicio:.2f}**")
+
+        selic_gov = get_selic()
+        filter_selic_date = (
+            (selic_gov["DataInicioVigencia"] <= data_inicio_meta) &
+            (selic_gov["DataFimVigencia"] >= data_inicio_meta)
+        )
+
+        selic_juros = selic_gov[filter_selic_date]["MetaSelic"].iloc[0]
+        selic = st.number_input("Taxa Selic (%)", min_value=0., value=selic_juros, format="%.2f")
+        selic = selic / 100
 
         col1_pot, col2_pot = st.columns(2)
         mensal = sal_liquido - custos_fixos
