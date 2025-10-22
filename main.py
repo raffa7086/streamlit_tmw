@@ -175,16 +175,26 @@ if file_upload is not None:
 
         selic_juros = selic_gov[filter_selic_date]["MetaSelic"].iloc[0]
         selic = st.number_input("Taxa Selic (%)", min_value=0., value=selic_juros, format="%.2f")
-        selic = selic / 100
+        selic_ano = selic / 100
+        selic_mes = (1 + selic_ano) ** (1/12) - 1
+
+
+        rendimento_ano = valor_inicio * selic_ano
+        rendimento_mes = valor_inicio * selic_mes
 
         col1_pot, col2_pot = st.columns(2)
-        mensal = sal_liquido - custos_fixos
-        anual = mensal * 12
+        mensal = sal_liquido - custos_fixos + rendimento_mes
+        anual = 12 * (sal_liquido - custos_fixos) + rendimento_ano
 
         with col1_pot.container(border=True):
-            st.markdown(f"**Potencial Arrecadação Mês: R$ {mensal:.2f}**")
+            st.markdown(f"Potencial Arrecadação Mês: R$ {mensal:.2f}""",
+                        help = f"Considerando Salário Líquido: R$ {sal_liquido:.2f} - Custos Fixos: R$ {custos_fixos:.2f} + Rendimento Mensal: R$ {rendimento_mes:.2f}"
+                        )
+
         with col2_pot.container(border=True):
-            st.markdown(f"**Potencial Arrecadação Ano: R$ {anual:.2f}**")
+            st.markdown(f"Potencial Arrecadação Ano: R$ {anual:.2f}"""
+                        , help = f"Considerando 12 x (Salário Líquido: R$ {sal_liquido:.2f} - Custos Fixos: R$ {custos_fixos:.2f}) + Rendimento Anual: R$ {rendimento_ano:.2f}"
+                        )
 
 
         with st.container(border=True):
@@ -195,3 +205,16 @@ if file_upload is not None:
             with col2_meta:
                 patrimonio_esperado = valor_inicio + meta_estipulada
                 st.markdown(f"Patrimônio Esperado pós meta:\n\n R$ {patrimonio_esperado:.2f}")
+
+        meses = pd.DataFrame({
+            "Data Referência": [data_inicio_meta + pd.DateOffset(months=m) for m in range(1, 13)],
+            "Meta Mensal": [valor_inicio + round(meta_estipulada/12, 2) * i for i in range(1, 13)],
+            })
+        
+        meses["Data Referência"] = meses["Data Referência"].dt.strftime("%Y-%m")
+
+        df_patrimonio = df_stats.reset_index()[["Data", "Valor"]]
+        df_patrimonio["Data Referência"] = pd.to_datetime(df_patrimonio["Data"]).dt.strftime("%Y-%m")
+        meses = meses.merge(df_patrimonio, on="Data Referência", how="left")
+
+        st.dataframe(meses)
